@@ -1,0 +1,458 @@
+local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/discoart/FluentPlus/refs/heads/main/Beta.lua"))()
+local Window = Fluent:CreateWindow({
+    Title = "StarHack Hub - Piggy",
+    SubTitle = "by StarHackScripts",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false,
+    Theme = "Darker",
+    MinimizeKey = Enum.KeyCode.LeftControl
+})
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "home" }),
+    Visual = Window:AddTab({ Title = "Visual", Icon = "eye" }),
+    ItemsGrabber = Window:AddTab({ Title = "Items Grabber", Icon = "package-search" }),
+    Killer = Window:AddTab({ Title = "Target Killer", Icon = "skull" }),
+    Credits = Window:AddTab({ Title = "Credits", Icon = "star" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+Fluent:Notify({
+    Title = "Welcome",
+    Content = "Made by StarHackScripts! I hope you enjoy it!",
+    Duration = 10
+})
+print("Star Hack Hub - Loaded | Made by: StarHackScripts")
+print("All the content of the script was made by StarHackScripts")
+local function createHighlight(target, name, color)
+    if target:FindFirstChild("StarHighlight_" .. name) then return end
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "StarHighlight_" .. name
+    highlight.Adornee = target
+    highlight.FillColor = color
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 1
+    highlight.Parent = target
+end
+local function removeHighlight(target, name)
+    local highlight = target:FindFirstChild("StarHighlight_" .. name)
+    if highlight then highlight:Destroy() end
+end
+local function updateESP()
+    task.spawn(function()
+        while task.wait(5) do
+            if Fluent.Options.PiggyESPPlayer and Fluent.Options.PiggyESPPlayer.Value then
+                createHighlight(LocalPlayer, "EnemyPlayer", Color3.fromRGB(255, 0, 0))
+            end
+            if Fluent.Options.SurvivorESP and Fluent.Options.SurvivorESP.Value then
+                createHighlight(LocalPlayer, "SurvivorPlayer", Color3.fromRGB(0, 255, 0))
+            end
+            if Fluent.Options.FriendlyNPC and Fluent.Options.FriendlyNPC.Value then
+                for _, folder in pairs(workspace:GetChildren()) do
+                    for _, npc in pairs(folder:GetChildren()) do
+                        if npc:IsA("Folder") then
+                            for _, child in pairs(npc:GetChildren()) do
+                                if child:FindFirstChild("Humanoid") and child:FindFirstChild("NPCScript") and not child:FindFirstChild("ToolRequired") then
+                                    createHighlight(child, "FriendlyNPC", Color3.fromRGB(255, 255, 0))
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            if Fluent.Options.UnfriendlyNPC and Fluent.Options.UnfriendlyNPC.Value then
+                for _, folder in pairs(workspace:GetChildren()) do
+                    for _, npc in pairs(folder:GetChildren()) do
+                        if npc:IsA("Folder") then
+                            for _, child in pairs(npc:GetChildren()) do
+                                if child:FindFirstChild("Humanoid") and not child:FindFirstChild("NPCScript") and (child:FindFirstChild("Enemy") and child.Enemy.Value or child:FindFirstChild("ToolRequired")) then
+                                    createHighlight(child, "UnfriendlyNPC", Color3.fromRGB(255, 120, 0))
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            if Fluent.Options.PiggyESPBot and Fluent.Options.PiggyESPBot.Value then
+                local piggyNPC = workspace:FindFirstChild("PiggyNPC")
+                if piggyNPC then
+                    for _, bot in pairs(piggyNPC:GetChildren()) do
+                        createHighlight(bot, "PiggyBot", Color3.fromRGB(0, 120, 255))
+                    end
+                end
+            end
+        end
+    end)
+end
+updateESP()
+Tabs.Main:AddInput("WalkspeedInput", {
+    Title = "Walkspeed",
+    Default = "",
+    Placeholder = "Enter the amount of speed you want here.",
+    Numeric = true,
+    Finished = true,
+    Callback = function(value)
+        local speed = tonumber(value)
+        if speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = speed
+        end
+    end
+})
+Tabs.Main:AddToggle("NoclipToggle", {
+    Title = "Noclip",
+    Default = false
+}):OnChanged(function(state)
+    if state then
+        local connection
+        connection = RunService.Stepped:Connect(function()
+            if LocalPlayer.Character then
+                for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+        table.insert(Fluent, connection)
+    else
+        for _, connection in ipairs(Fluent) do
+            if not connection:IsDescendantOf(LocalPlayer.Character) then
+                connection:Disconnect()
+            end
+        end
+        if LocalPlayer.Character then
+            for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+    end
+end)
+Tabs.Visual:AddToggle("PiggyESPPlayer", {
+    Title = "Piggy ESP (Player)",
+    Default = false
+}):OnChanged(function(state)
+    if state then
+        createHighlight(LocalPlayer, "EnemyPlayer", Color3.fromRGB(255, 0, 0))
+    else
+        removeHighlight(LocalPlayer, "EnemyPlayer")
+    end
+end)
+Tabs.Visual:AddToggle("PiggyESPBot", {
+    Title = "Piggy ESP (Bot)",
+    Default = false
+}):OnChanged(function(state)
+    local piggyNPC = workspace:FindFirstChild("PiggyNPC")
+    if state and piggyNPC then
+        for _, bot in pairs(piggyNPC:GetChildren()) do
+            createHighlight(bot, "PiggyBot", Color3.fromRGB(0, 120, 255))
+        end
+    elseif piggyNPC then
+        for _, bot in pairs(piggyNPC:GetChildren()) do
+            removeHighlight(bot, "PiggyBot")
+        end
+    end
+end)
+Tabs.Visual:AddToggle("FriendlyNPC", {
+    Title = "Friendly NPC ESP",
+    Default = false
+}):OnChanged(function(state)
+    if state then
+        for _, folder in pairs(workspace:GetChildren()) do
+            for _, npc in pairs(folder:GetChildren()) do
+                if npc:IsA("Folder") then
+                    for _, child in pairs(npc:GetChildren()) do
+                        if child:FindFirstChild("Humanoid") and child:FindFirstChild("NPCScript") and not child:FindFirstChild("ToolRequired") then
+                            createHighlight(child, "FriendlyNPC", Color3.fromRGB(255, 255, 0))
+                        end
+                    end
+                end
+            end
+        end
+    else
+        for _, folder in pairs(workspace:GetChildren()) do
+            for _, npc in pairs(folder:GetChildren()) do
+                if npc:IsA("Folder") then
+                    for _, child in pairs(npc:GetChildren()) do
+                        removeHighlight(child, "FriendlyNPC")
+                    end
+                end
+            end
+        end
+    end
+end)
+Tabs.Visual:AddToggle("UnfriendlyNPC", {
+    Title = "Unfriendly NPC ESP",
+    Default = false
+}):OnChanged(function(state)
+    if state then
+        for _, folder in pairs(workspace:GetChildren()) do
+            for _, npc in pairs(folder:GetChildren()) do
+                if npc:IsA("Folder") then
+                    for _, child in pairs(npc:GetChildren()) do
+                        if child:FindFirstChild("Humanoid") and not child:FindFirstChild("NPCScript") and (child:FindFirstChild("Enemy") and child.Enemy.Value or child:FindFirstChild("ToolRequired")) then
+                            createHighlight(child, "UnfriendlyNPC", Color3.fromRGB(255, 120, 0))
+                        end
+                    end
+                end
+            end
+        end
+    else
+        for _, folder in pairs(workspace:GetChildren()) do
+            for _, npc in pairs(folder:GetChildren()) do
+                if npc:IsA("Folder") then
+                    for _, child in pairs(npc:GetChildren()) do
+                        removeHighlight(child, "UnfriendlyNPC")
+                    end
+                end
+            end
+        end
+    end
+end)
+Tabs.Visual:AddToggle("SurvivorESP", {
+    Title = "Survivors (Players)",
+    Default = false
+}):OnChanged(function(state)
+    if state then
+        createHighlight(LocalPlayer, "SurvivorPlayer", Color3.fromRGB(0, 255, 0))
+    else
+        removeHighlight(LocalPlayer, "SurvivorPlayer")
+    end
+end)
+Tabs.Visual:AddButton({
+    Title = "UnESP Yourself",
+    Description = "Remove your own ESP highlight",
+    Callback = function()
+        for _, espType in ipairs({"EnemyPlayer", "SurvivorPlayer", "FriendlyNPC", "UnfriendlyNPC", "PiggyBot"}) do
+            if LocalPlayer.Character then
+                removeHighlight(LocalPlayer.Character, espType)
+            end
+        end
+    end
+})
+local v2, v1, classic = false, false, false
+Tabs.ItemsGrabber:AddParagraph({
+    Title = "Information",
+    Content = "If you use the Item Grabber in your own Build Mode, keep in mind that it may not work correctly during the first round. Starting from the second round, it starts working correctly."
+})
+Tabs.ItemsGrabber:AddButton({
+    Title = "[BEST] Items Grabber v2",
+    Description = "The best universal version.",
+    Callback = function()
+        if v2 then
+            Fluent:Notify({
+                Title = "Already Executed",
+                Content = "You have already executed this version.",
+                Duration = 5
+            })
+            return
+        end
+        v2 = true
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/StarHackScripts/StarHack-Hub-Deepstar-Hub/refs/heads/main/PiggyItemsGrabber-v2.txt"))()
+    end
+})
+Tabs.ItemsGrabber:AddButton({
+    Title = "Old Items Grabber v1",
+    Description = "It has worse performance and doesn't work well in Build Mode.",
+    Callback = function()
+        if v1 then
+            Fluent:Notify({
+                Title = "Already Executed",
+                Content = "You have already executed this version.",
+                Duration = 5
+            })
+            return
+        end
+        v1 = true
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/StarHackScripts/StarHack-Hub-Deepstar-Hub/refs/heads/main/StarHack%20Hub%20-%20Piggy"))()
+    end
+})
+Tabs.ItemsGrabber:AddButton({
+    Title = "Classic Items Grabber",
+    Description = "It has worse performance and doesn't work on book 2.",
+    Callback = function()
+        if classic then
+            Fluent:Notify({
+                Title = "Already Executed",
+                Content = "You have already executed this version.",
+                Duration = 5
+            })
+            return
+        end
+        classic = true
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/StarHackScripts/StarHack-Hub-Deepstar-Hub/refs/heads/main/PiggyBuildModeService"))()
+    end
+})
+local targetPlayer = ""
+Tabs.Killer:AddInput("TargetPlayerInput", {
+    Title = "Choose a player to target",
+    Placeholder = "Insert player name...",
+    Callback = function(value)
+        local player = Players:FindFirstChild(value)
+        if player then
+            targetPlayer = value
+            Fluent:Notify({
+                Title = "Target",
+                Content = "You have selected successfully " .. player.Name .. " as your target.",
+                Duration = 7
+            })
+        else
+            Fluent:Notify({
+                Title = "Target",
+                Content = "Player not found! Did she/he rage quit, lol?",
+                Duration = 7
+            })
+        end
+    end
+})
+Tabs.Killer:AddButton({
+    Title = "Teleport",
+    Description = "Teleports you to the choosed player.",
+    Callback = function()
+        local player = Players:FindFirstChild(targetPlayer)
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(0, 0, 2)) * player.Character.HumanoidRootPart.CFrame
+        else
+            Fluent:Notify({
+                Title = "Teleport Failed",
+                Content = "Target not found or not loaded.",
+                Duration = 6
+            })
+        end
+    end
+})
+Tabs.Killer:AddToggle("FollowTargetToggle", {
+    Title = "Follow",
+    Description = "Realistically follow the selected player.",
+    Default = false,
+    Callback = function(state)
+        if state then
+            task.spawn(function()
+                while state do
+                    local player = Players:FindFirstChild(targetPlayer)
+                    if player and player.Character and player.Character:FindFirstChildOfClass("Humanoid") and player.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        local distance = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                        if distance > 5 then
+                            LocalPlayer.Character.Humanoid:MoveTo(player.Character.HumanoidRootPart.Position)
+                        else
+                            LocalPlayer.Character.Humanoid:MoveTo(LocalPlayer.Character.HumanoidRootPart.Position)
+                        end
+                    end
+                    task.wait(0.25)
+                end
+            end)
+        end
+    end
+})
+Tabs.Credits:AddParagraph({
+    Title = "Made by:",
+    Content = "StarHackScripts"
+})
+Tabs.Credits:AddButton({
+    Title = "Copy YouTube",
+    Description = "Copy my YouTube link to clipboard",
+    Callback = function()
+        setclipboard("https://youtube.com/@starhackscripts?si=qqHtv2ueBDjzlA7M")
+        Fluent:Notify({
+            Title = "YouTube Link Copied",
+            Content = "See you in my videos, pookie!",
+            Duration = 7
+        })
+    end
+})
+Tabs.Credits:AddButton({
+    Title = "Copy Discord",
+    Description = "Copy my Discord invite to clipboard",
+    Callback = function()
+        setclipboard("https://discord.com/invite/WTu5Eny3qZ")
+        Fluent:Notify({
+            Title = "Discord Invite Copied",
+            Content = "Welcome to the team! We'll talk together if you like!",
+            Duration = 7
+        })
+    end
+})
+Tabs.Settings:AddButton({
+    Title = "DON'T CLICK ME",
+    Description = "???",
+    Callback = function()
+        Fluent:Notify({
+            Title = "???",
+            Content = "Nope, you can't...",
+            Duration = 5
+        })
+        task.wait(1)
+        Fluent:Notify({
+            Title = "???",
+            Content = "Look at your face... You're turning into him... You have disappointed me.",
+            Duration = 20
+        })
+        local images = {
+            { imageId = "rbxassetid://125039877065380", soundIds = {"rbxassetid://5710016194"}, duration = 10, extraSoundAfter = true, extraSoundId = "115148092308561" },
+            { imageId = "rbxassetid://15835964289", soundIds = {"rbxassetid://9043360237", "rbxassetid://9080161598"}, duration = 100 },
+            { imageId = "rbxassetid://18946427139", soundIds = {{ id = "rbxassetid://82212266751032", pitch = 0.9 }}, duration = 5 },
+            { imageId = "rbxassetid://6986070429", soundIds = {{ id = "rbxassetid://7236490488", pitch = 1 }, { id = "rbxassetid://7255999109", pitch = 1, delayAfter = true }}, duration = 33 }
+        }
+        local usedImages = {}
+        while true do
+            local index = math.random(1, #images)
+            if not table.find(usedImages, index) then
+                table.insert(usedImages, index)
+                local image = images[index]
+                local soundIds = image.soundIds
+                for _, soundData in ipairs(soundIds) do
+                    local sound = Instance.new("Sound")
+                    if typeof(soundData) == "string" then
+                        sound.SoundId = soundData
+                        sound.PlaybackSpeed = 1
+                    else
+                        sound.SoundId = soundData.id
+                        sound.PlaybackSpeed = soundData.pitch or 1
+                    end
+                    sound:Play()
+                    if soundData.delayAfter then
+                        task.wait(1)
+                    end
+                end
+                if image.extraSoundId then
+                    task.delay(image.extraSoundAfter or 1, function()
+                        local extraSound = Instance.new("Sound")
+                        extraSound.SoundId = image.extraSoundId
+                        extraSound:Play()
+                    end)
+                end
+                task.delay(image.duration, function()
+                    if #usedImages == #images then
+                        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                part.Color = Color3.new(0, 0, 0)
+                            end
+                        end
+                        local head = LocalPlayer.Character:WaitForChild("Head")
+                        local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                        local shirt = LocalPlayer.Character:FindFirstChildOfClass("Shirt")
+                        local pants = LocalPlayer.Character:FindFirstChildOfClass("Pants")
+                        local shirtGraphic = LocalPlayer.Character:FindFirstChildOfClass("ShirtGraphic")
+                        if shirt then shirt.Parent = nil end
+                        if pants then pants.Parent = nil end
+                        if shirtGraphic then shirtGraphic.Parent = nil end
+                        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+                            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                                part.Color = Color3.new(0, 0, 0)
+                            end
+                        end
+                        local decal = Instance.new("Decal")
+                        decal.Name = "Face"
+                        decal.Texture = images[1].imageId
+                        decal.Face = Enum.NormalId.Front
+                        decal.Parent = head
+                    end
+                end)
+                break
+            end
+        end
+    end
+})
