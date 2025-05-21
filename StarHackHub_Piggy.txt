@@ -1,3 +1,7 @@
+--[[
+        Is still broken like the original :)
+]]--
+
 local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/discoart/FluentPlus/refs/heads/main/Beta.lua"))()
 local Window = Fluent:CreateWindow({
     Title = "StarHack Hub - Piggy",
