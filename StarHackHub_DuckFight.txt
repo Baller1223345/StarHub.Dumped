@@ -1,0 +1,224 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+if LocalPlayer.Character then
+    LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+end
+LocalPlayer.CharacterAdded:Wait()
+local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/discoart/FluentPlus/refs/heads/main/Beta.lua"))()
+local Window = Fluent:CreateWindow({
+    Title = "StarHack Hub - Duck Fight",
+    SubTitle = "By StarHackScripts",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false,
+    Theme = "Darker",
+    MinimizeKey = Enum.KeyCode.RightControl
+})
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "home" }),
+    Tools = Window:AddTab({ Title = "Tools", Icon = "sword" }),
+    Killer = Window:AddTab({ Title = "Target Killer", Icon = "skull" }),
+    Credits = Window:AddTab({ Title = "Credits", Icon = "heart" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
+Fluent:Notify({
+    Title = "Welcome",
+    Content = "Made by StarHackScripts! I hope you enjoy it!",
+    Duration = 10
+})
+Tabs.Main:AddInput("WalkspeedInput", {
+    Title = "Walkspeed",
+    Default = "",
+    Placeholder = "Enter the speed you want.",
+    Numeric = true,
+    Finished = true,
+    Callback = function(value)
+        local speed = tonumber(value)
+        if speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = speed
+        end
+    end
+})
+local highlightedPlayers = {}
+local targetPlayer = ""
+local tools = {
+    ["Power Up 1"] = Vector3.new(-88.909, 1324.568, -108.724),
+    ["[OP] Toxic Fart Orb"] = Vector3.new(-144.75054931640625, 1314.079833984375, 78.40706634521484),
+    ["Electric Power Up"] = Vector3.new(-247.612, 1153.305, 33.969),
+    ["Ice Staff"] = Vector3.new(-563.038, 1649.287, -121.681),
+    ["Fire Staff"] = Vector3.new(-248.696, 1633.549, 329.074),
+    ["Classic Sword"] = Vector3.new(-92.283, 1315.746, -203.16),
+    ["Fire Sword"] = Vector3.new(-257.906, 1405.776, -206.561),
+    ["[OP] Thunder Sword"] = Vector3.new(-361.003, 1337.079, -460.055),
+    ["Sonar Power Up"] = Vector3.new(206.838, 1573.712, -215.165),
+    ["Light Sword"] = Vector3.new(162.252, 1984.957, -440.104),
+    ["Fire Power Up"] = Vector3.new(9.953, 1561.398, -502.546),
+    ["Star Dash Sword"] = Vector3.new(-525.002, 1502.333, 74.426),
+    ["Fly Power Up"] = Vector3.new(39.541, 1022.974, 128.144),
+    ["Electric Power Up 2"] = Vector3.new(183.445, 1212.5, 142.018),
+    ["Health Friendly Sword"] = Vector3.new(582.023, 1312.239, 365.644),
+    ["Ghost Sword"] = Vector3.new(659.008, 1498.25, 81.81),
+    ["[OP] Electric Sword"] = Vector3.new(-513.751, 1150.188, 638.996),
+    ["[OP] Ice Sword"] = Vector3.new(26.129, 1317.015, 518.379),
+    ["Toxic Fart Sword"] = Vector3.new(36.294, 1192.015, 752.092),
+    ["Power Up 2"] = Vector3.new(-54.169, 1228.642, 862.678),
+    ["Windstone Orb"] = Vector3.new(-98.815, 1248.532, 945.604),
+    ["Forcefield Orb"] = Vector3.new(129.767, 1176.413, -389.533),
+    ["[OP] Axe Of Heck"] = Vector3.new(-121.433, 1403.636, 3547.43),
+    ["Invisible Shadow Orb"] = Vector3.new(416.777, 1715.972, 760.095),
+    ["Venom Sword"] = Vector3.new(169.738, 1257.535, -70.181),
+    ["Axe"] = Vector3.new(116.212, 2522.559, 425.956),
+    ["[OP] Health Power Up"] = Vector3.new(-236.598, 2578.24, 321.076),
+    ["Heck Health Power Up"] = Vector3.new(-229.464, 1342.93, 3546.918),
+    ["Darkness Sword"] = Vector3.new(-249.244, 1285.063, 335.956),
+    ["[OP] Tesla"] = Vector3.new(450.952, 1110.476, 302.842)
+}
+for toolName, position in pairs(tools) do
+    Tabs.Tools:AddButton({
+        Title = toolName,
+        Description = "Teleport to tool: " .. toolName,
+        Callback = function()
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
+                task.wait(1)
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
+                end
+            end
+            LocalPlayer.CharacterAdded:Wait()
+        end
+    })
+end
+Tabs.Main:AddToggle("ESPDucksToggle", {
+    Title = "ESP Players Ducks",
+    Description = "Highlight all players in red (updates every 5s)",
+    Default = false,
+    Callback = function(state)
+        if state then
+            task.spawn(function()
+                while state do
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                            local highlight = Instance.new("Highlight")
+                            highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                            highlight.Parent = player.Character
+                            highlight.Adornee = player.Character
+                            table.insert(highlightedPlayers, highlight)
+                        end
+                    end
+                    task.wait(5)
+                end
+            end)
+        else
+            for _, highlight in pairs(highlightedPlayers) do
+                if highlight.Parent then
+                    highlight:Destroy()
+                end
+            end
+            highlightedPlayers = {}
+        end
+    end
+})
+Tabs.Main:AddButton({
+    Title = "UnESP Yourself",
+    Description = "Stop the ESP of yourself",
+    Callback = function()
+        if LocalPlayer.Character then
+            for _, highlight in pairs(LocalPlayer.Character:GetChildren()) do
+                if highlight:IsA("Highlight") then
+                    highlight:Destroy()
+                end
+            end
+        end
+    end
+})
+Tabs.Killer:AddInput("TargetPlayerInput", {
+    Title = "Choose a player to target",
+    Placeholder = "Insert player name...",
+    Callback = function(value)
+        local player = Players:FindFirstChild(value)
+        if player then
+            targetPlayer = value
+            Fluent:Notify({
+                Title = "Target",
+                Content = "You have selected successfully " .. player.Name .. " as your target.",
+                Duration = 7
+            })
+        else
+            Fluent:Notify({
+                Title = "Target",
+                Content = "Player not found! Did she/he rage quit, lol?",
+                Duration = 7
+            })
+        end
+    end
+})
+Tabs.Killer:AddButton({
+    Title = "Teleport",
+    Description = "Teleports you to the choosed player.",
+    Callback = function()
+        local player = Players:FindFirstChild(targetPlayer)
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(0, 0, 2)) * player.Character.HumanoidRootPart.CFrame
+        else
+            Fluent:Notify({
+                Title = "Teleport Failed",
+                Content = "Target not found or not loaded.",
+                Duration = 6
+            })
+        end
+    end
+})
+Tabs.Killer:AddToggle("FollowTargetToggle", {
+    Title = "Follow",
+    Description = "Realistically follow the selected player.",
+    Default = false,
+    Callback = function(state)
+        if state then
+            task.spawn(function()
+                while state do
+                    local player = Players:FindFirstChild(targetPlayer)
+                    if player and player.Character and player.Character:FindFirstChildOfClass("Humanoid") and player.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        local distance = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                        if distance > 5 then
+                            LocalPlayer.Character.Humanoid:MoveTo(player.Character.HumanoidRootPart.Position)
+                        else
+                            LocalPlayer.Character.Humanoid:MoveTo(LocalPlayer.Character.HumanoidRootPart.Position)
+                        end
+                    end
+                    task.wait(0.25)
+                end
+            end)
+        end
+    end
+})
+Tabs.Credits:AddParagraph({
+    Title = "Made by:",
+    Content = "StarHackScripts"
+})
+Tabs.Credits:AddButton({
+    Title = "Copy YouTube",
+    Description = "Copy my YouTube link to clipboard",
+    Callback = function()
+        setclipboard("https://youtube.com/@starhackscripts?si=qqHtv2ueBDjzlA7M")
+        Fluent:Notify({
+            Title = "YouTube Link Copied",
+            Content = "See you in my videos, pookie!",
+            Duration = 7
+        })
+    end
+})
+Tabs.Credits:AddButton({
+    Title = "Copy Discord",
+    Description = "Copy my Discord invite to clipboard",
+    Callback = function()
+        setclipboard("https://discord.com/invite/WTu5Eny3qZ")
+        Fluent:Notify({
+            Title = "Discord Invite Copied",
+            Content = "Welcome to the team! We'll talk together if you like!",
+            Duration = 7
+        })
+    end
+})
